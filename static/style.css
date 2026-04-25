@@ -450,3 +450,33 @@ input[type="date"]:focus {
         position: static;
     }
 }
+
+/* Calendar Navigation */
+.cal-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+
+.cal-nav h2 {
+    margin: 0;
+    font-size: 1rem;
+    text-align: center;
+}
+
+.cal-nav-arrow {
+    font-size: 1rem;
+    color: #6366f1;
+    text-decoration: none;
+    padding: 4px 10px;
+    border-radius: 6px;
+    border: 1px solid #6366f1;
+    transition: all 0.2s;
+    line-height: 1.4;
+}
+
+.cal-nav-arrow:hover {
+    background: #6366f1;
+    color: white;
+}

@@ -127,10 +127,18 @@
 
             </div>
 
-            <!-- Right Column — Calendar -->
+            <!-- Right Column — Calendar -->            
             <div class="right-column">
                 <div class="card calendar-card">
-                    <h2>📆 {{ calendar_month }}</h2>
+
+                    <!-- Calendar Header with Navigation -->
+                    <div class="cal-nav">
+                        <a href="/?offset={{ offset }}&cal_year={{ calendar_data.prev_year }}&cal_month={{ calendar_data.prev_month }}" class="cal-nav-arrow">&#8592;</a>
+                        <h2>{{ calendar_data.name }}</h2>
+                        <a href="/?offset={{ offset }}&cal_year={{ calendar_data.next_year }}&cal_month={{ calendar_data.next_month }}" class="cal-nav-arrow">&#8594;</a>
+                    </div>
+
+                    <!-- Day Headers -->
                     <div class="calendar-grid">
                         <div class="cal-header">Mon</div>
                         <div class="cal-header">Tue</div>
@@ -139,15 +147,15 @@
                         <div class="cal-header">Fri</div>
                         <div class="cal-header">Sat</div>
                         <div class="cal-header">Sun</div>
-                        {% for day in calendar_days %}
+
+                        {% for day in calendar_data.days %}
                             {% if day.empty %}
                             <div class="cal-day empty"></div>
                             {% else %}
-                            <div class="cal-day 
-                                {{ 'in-fortnight' if day.in_fortnight else '' }} 
+                            <div class="cal-day
+                                {{ 'in-fortnight' if day.in_fortnight else 'outside' }}
                                 {{ 'worked' if day.worked else '' }}
-                                {{ 'today' if day.is_today else '' }}
-                                {{ 'outside' if not day.in_fortnight else '' }}">
+                                {{ 'today' if day.is_today else '' }}">
                                 {{ day.day }}
                             </div>
                             {% endif %}
@@ -169,9 +177,9 @@
                             <span>Today</span>
                         </div>
                     </div>
+
                 </div>
             </div>
-
         </div>
 </body>
 </html>

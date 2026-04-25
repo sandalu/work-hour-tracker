@@ -1,8 +1,8 @@
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for
 import sys
 import os
 import calendar
-from datetime import datetime as dt, date, timedelta
+from datetime import date, timedelta, datetime as dt
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
@@ -17,13 +17,9 @@ app = Flask(__name__,
 
 app.secret_key = 'workhourtracker2026'
 
-
-def build_calendar(fortnight_start, fortnight_end, worked_dates):
-    """Build calendar data for the fortnight month"""
+def build_calendar(year, month, fortnight_start, fortnight_end, worked_dates):
+    """Build calendar for a specific month"""
     today = date.today()
-    year = fortnight_start.year
-    month = fortnight_start.month
-
     cal = calendar.monthcalendar(year, month)
     days = []
 
@@ -41,7 +37,26 @@ def build_calendar(fortnight_start, fortnight_end, worked_dates):
                     "is_today": current == today,
                 })
 
-    return days, fortnight_start.strftime("%B %Y")
+    month_name = date(year, month, 1).strftime("%B %Y")
+
+    if month == 1:
+        prev_year, prev_month = year - 1, 12
+    else:
+        prev_year, prev_month = year, month - 1
+
+    if month == 12:
+        next_year, next_month = year + 1, 1
+    else:
+        next_year, next_month = year, month + 1
+
+    return {
+        "name": month_name,
+        "days": days,
+        "prev_year": prev_year,
+        "prev_month": prev_month,
+        "next_year": next_year,
+        "next_month": next_month,
+    }
 
 @app.route('/')
 def index():
@@ -85,7 +100,10 @@ def index():
     entries = sorted(filtered_entries, key=lambda x: x.get("work_date", x["date"]), reverse=True)
 
     worked_dates = set(e.get("work_date", e["date"]) for e in filtered_entries)
-    calendar_days, calendar_month = build_calendar(fortnight_start, fortnight_end, worked_dates)
+
+    cal_year = int(request.args.get('cal_year', fortnight_start.year))
+    cal_month = int(request.args.get('cal_month', fortnight_start.month))
+    calendar_data = build_calendar(cal_year, cal_month, fortnight_start, fortnight_end, worked_dates)
 
     return render_template('index.html',
         total=total,
@@ -102,8 +120,7 @@ def index():
         can_go_back=can_go_back,
         academic_start=academic_start_date.strftime("%d %b %Y"),
         error=request.args.get('error'),
-        calendar_days=calendar_days,
-        calendar_month=calendar_month
+        calendar_data=calendar_data
     )
 
 @app.route('/log', methods=['POST'])
@@ -112,10 +129,9 @@ def log():
     hours = float(request.form.get('hours'))
     work_date = request.form.get('work_date')
 
-    # Block if before academic start
     if is_before_academic_start(work_date):
         academic_start = get_academic_start()
-        return redirect(url_for('index', error=f"❌ Cannot log hours before your academic start date ({academic_start.strftime('%d %b %Y')})"))
+        return redirect(url_for('index', error=f"Cannot log hours before your academic start date ({academic_start.strftime('%d %b %Y')})"))
 
     log_hours(hours, job, work_date)
     return redirect(url_for('index'))
