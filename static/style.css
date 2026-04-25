@@ -230,3 +230,61 @@ input[type="date"] {
 input[type="date"]:focus {
     border-color: #6366f1;
 }
+
+/* Fortnight Navigation */
+.fortnight-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    background: #0f172a;
+    border-radius: 10px;
+    padding: 12px 16px;
+}
+
+.fortnight-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.fortnight-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #6366f1;
+    font-weight: 600;
+}
+
+.fortnight-period {
+    font-size: 0.95rem;
+    color: #94a3b8;
+}
+
+.fortnight-period strong {
+    color: #e2e8f0;
+}
+
+.nav-arrow {
+    font-size: 1.4rem;
+    color: #6366f1;
+    text-decoration: none;
+    padding: 8px 14px;
+    border-radius: 8px;
+    border: 1px solid #6366f1;
+    transition: all 0.2s;
+    line-height: 1;
+}
+
+.nav-arrow:hover {
+    background: #6366f1;
+    color: white;
+}
+
+.nav-arrow.disabled {
+    color: #334155;
+    border-color: #334155;
+    cursor: not-allowed;
+    pointer-events: none;
+}

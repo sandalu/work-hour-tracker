@@ -50,6 +50,28 @@ def get_fortnight_end():
     from datetime import timedelta
     return get_fortnight_start() + timedelta(days=13)
 
+def get_fortnight_by_offset(offset=0):
+    """Get fortnight start and end by offset from current fortnight"""
+    from datetime import timedelta
+    current_start = get_fortnight_start()
+    start = current_start + timedelta(weeks=2 * offset)
+    end = start + timedelta(days=13)
+    return start, end
+
+def get_fortnightly_hours_by_offset(offset=0):
+    """Calculate total hours for a specific fortnight by offset"""
+    data = load_data()
+    fortnight_start, fortnight_end = get_fortnight_by_offset(offset)
+    total = 0
+
+    for entry in data["entries"]:
+        date_key = entry.get("work_date", entry["date"])
+        entry_date = datetime.strptime(date_key, "%Y-%m-%d").date()
+        if fortnight_start <= entry_date <= fortnight_end:
+            total += entry["hours"]
+
+    return total
+
 def get_fortnightly_hours():
     """Calculate total hours in the current fortnight (Monday to 14 days)"""
     data = load_data()

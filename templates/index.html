@@ -18,7 +18,22 @@
         <!-- Status Card -->
         <div class="card status-card {{ status }}">
             <p class="message">{{ message }}</p>
-            <p class="fortnight-period">📅 Current Fortnight: <strong>{{ fortnight_start }}</strong> → <strong>{{ fortnight_end }}</strong></p>
+
+            <!-- Fortnight Navigation -->
+            <div class="fortnight-nav">
+                <a href="/?offset={{ offset - 1 }}" class="nav-arrow">&#8592;</a>
+                
+                <div class="fortnight-info">
+                    <span class="fortnight-label">{{ "Current Fortnight" if is_current else "Previous Fortnight" }}</span>
+                    <span class="fortnight-period">📅 <strong>{{ fortnight_start }}</strong> → <strong>{{ fortnight_end }}</strong></span>
+                </div>
+
+                {% if is_current %}
+                    <span class="nav-arrow disabled">&#8594;</span>
+                {% else %}
+                    <a href="/?offset={{ offset + 1 }}" class="nav-arrow">&#8594;</a>
+                {% endif %}
+            </div>
             
             <!-- Progress Bar -->
             <div class="progress-bar-container">
