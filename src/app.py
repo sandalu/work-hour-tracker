@@ -75,18 +75,27 @@ def log():
 
 @app.route('/delete/<int:index>', methods=['POST'])
 def delete(index):
+    # Only allow delete on current fortnight
+    fortnight_start, fortnight_end = get_fortnight_by_offset(0)
     data = load_data()
-    entries = sorted(data["entries"], key=lambda x: x["date"], reverse=True)
-    
-    # Find the actual entry to delete
-    entry_to_delete = entries[index]
-    
-    # Remove it from original data
-    data["entries"].remove(entry_to_delete)
-    
-    from tracker import save_data
-    save_data(data)
-    
+
+    # Get current fortnight entries only
+    current_entries = []
+    for entry in data["entries"]:
+        date_key = entry.get("work_date", entry["date"])
+        from datetime import datetime as dt
+        entry_date = dt.strptime(date_key, "%Y-%m-%d").date()
+        if fortnight_start <= entry_date <= fortnight_end:
+            current_entries.append(entry)
+
+    current_entries = sorted(current_entries, key=lambda x: x.get("work_date", x["date"]), reverse=True)
+
+    if index < len(current_entries):
+        entry_to_delete = current_entries[index]
+        data["entries"].remove(entry_to_delete)
+        from tracker import save_data
+        save_data(data)
+
     return redirect(url_for('index'))
 
 if __name__ == '__main__':

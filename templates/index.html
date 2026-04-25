@@ -100,9 +100,13 @@
                         <td>{{ entry.hours }}hrs</td>
                         <td>{{ entry.date }}</td>
                         <td>
+                            {% if is_current %}
                             <form action="/delete/{{ loop.index0 }}" method="POST" onsubmit="return confirm('Delete this entry?')">
                                 <button type="submit" class="btn-delete">🗑️ Delete</button>
                             </form>
+                            {% else %}
+                            <span class="read-only">🔒 Locked</span>
+                            {% endif %}
                         </td>
                     </tr>
                     {% endfor %}

@@ -288,3 +288,9 @@ input[type="date"]:focus {
     cursor: not-allowed;
     pointer-events: none;
 }
+
+/* Read only lock */
+.read-only {
+    font-size: 0.85rem;
+    color: #475569;
+}
