@@ -184,3 +184,20 @@ tr:hover td {
     color: #94a3b8;
     padding: 30px 0;
 }
+
+/* Delete Button */
+.btn-delete {
+    padding: 6px 12px;
+    background: transparent;
+    color: #ef4444;
+    border: 1px solid #ef4444;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-delete:hover {
+    background: #ef4444;
+    color: white;
+}

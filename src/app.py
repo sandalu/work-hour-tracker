@@ -49,5 +49,21 @@ def log():
     log_hours(hours, job)
     return redirect(url_for('index'))
 
+@app.route('/delete/<int:index>', methods=['POST'])
+def delete(index):
+    data = load_data()
+    entries = sorted(data["entries"], key=lambda x: x["date"], reverse=True)
+    
+    # Find the actual entry to delete
+    entry_to_delete = entries[index]
+    
+    # Remove it from original data
+    data["entries"].remove(entry_to_delete)
+    
+    from tracker import save_data
+    save_data(data)
+    
+    return redirect(url_for('index'))
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

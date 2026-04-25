@@ -68,6 +68,7 @@
                         <th>Date</th>
                         <th>Job</th>
                         <th>Hours</th>
+                        <th>Action</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -76,6 +77,11 @@
                         <td>{{ entry.date }}</td>
                         <td>{{ entry.job }}</td>
                         <td>{{ entry.hours }}hrs</td>
+                        <td>
+                            <form action="/delete/{{ loop.index0 }}" method="POST" onsubmit="return confirm('Delete this entry?')">
+                                <button type="submit" class="btn-delete">🗑️ Delete</button>
+                            </form>
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>
