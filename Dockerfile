@@ -1,17 +1,23 @@
-# Use official Python image as base
+# Use official Python image
 FROM python:3.11-slim
 
-# Set working directory inside container
+# Set working directory
 WORKDIR /app
 
-# Copy everything into the container
+# Copy everything into container
 COPY . .
 
-# Set the src folder in Python path so imports work
-ENV PYTHONPATH=/app/src
+# Install Flask and dependencies
+RUN pip install -r requirements.txt --no-cache-dir
 
-# Create the data directory inside container
+# Create data directory
 RUN mkdir -p /app/data
 
-# Run the tracker script
-CMD ["python", "src/tracker.py"]
+# Set Python path so imports work
+ENV PYTHONPATH=/app/src
+
+# Expose port 5000
+EXPOSE 5000
+
+# Run the Flask web app
+CMD ["python", "src/app.py"]
