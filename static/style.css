@@ -201,3 +201,14 @@ tr:hover td {
     background: #ef4444;
     color: white;
 }
+
+/* Fortnight Period */
+.fortnight-period {
+    font-size: 0.9rem;
+    color: #94a3b8;
+    margin-bottom: 20px;
+}
+
+.fortnight-period strong {
+    color: #e2e8f0;
+}

@@ -4,7 +4,7 @@ import os
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from tracker import log_hours, get_fortnightly_hours, load_data
+from tracker import log_hours, get_fortnightly_hours, load_data, get_fortnight_start, get_fortnight_end
 from config import FORTNIGHTLY_HOUR_LIMIT, ALERT_THRESHOLD
 
 app = Flask(__name__, 
@@ -31,6 +31,8 @@ def index():
     # Get history
     data = load_data()
     entries = sorted(data["entries"], key=lambda x: x["date"], reverse=True)
+    fortnight_start = get_fortnight_start()
+    fortnight_end = get_fortnight_end()
 
     return render_template('index.html',
         total=total,
@@ -39,7 +41,10 @@ def index():
         limit=FORTNIGHTLY_HOUR_LIMIT,
         status=status,
         message=message,
-        entries=entries
+        entries=entries,
+        fortnight_start=fortnight_start.strftime("%d %b %Y"),
+        fortnight_end=fortnight_end.strftime("%d %b %Y")
+    
     )
 
 @app.route('/log', methods=['POST'])

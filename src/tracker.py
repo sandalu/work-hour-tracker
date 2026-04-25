@@ -36,17 +36,32 @@ def log_hours(hours, job_name):
     save_data(data)
     print(f"✅ Logged {hours} hours for {job_name} on {date.today()}")
 
-def get_fortnightly_hours():
-    """Calculate total hours in the current fortnight"""
-    data = load_data()
+def get_fortnight_start():
+    """Get the most recent Monday as fortnight start"""
     today = date.today()
+    # Monday is weekday 0
+    days_since_monday = today.weekday()
+    fortnight_start = today - __import__('datetime').timedelta(days=days_since_monday)
+    return fortnight_start
+
+def get_fortnight_end():
+    """Get the fortnight end date (14 days from start)"""
+    from datetime import timedelta
+    return get_fortnight_start() + timedelta(days=13)
+
+def get_fortnightly_hours():
+    """Calculate total hours in the current fortnight (Monday to 14 days)"""
+    data = load_data()
+    fortnight_start = get_fortnight_start()
+    fortnight_end = get_fortnight_end()
     total = 0
 
     for entry in data["entries"]:
         entry_date = datetime.strptime(entry["date"], "%Y-%m-%d").date()
-        days_diff = (today - entry_date).days
-        if days_diff <= 14:
+        if fortnight_start <= entry_date <= fortnight_end:
             total += entry["hours"]
+
+    return total
 
     return total
 
