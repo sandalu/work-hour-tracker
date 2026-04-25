@@ -4,6 +4,9 @@ A command-line app to track work hours and stay within the Australian student vi
 
 Built with Python and Docker as part of my DevOps learning journey.
 
+## 🌐 Live Demo
+Access the app at: http://3.27.241.208
+
 ## 🛠️ Tech Stack
 - Python 3.11
 - Docker
