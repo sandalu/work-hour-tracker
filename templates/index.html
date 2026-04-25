@@ -157,8 +157,7 @@
                             <tr>
                                 <th>Date Worked</th>
                                 <th>Job</th>
-                                <th>Hours</th>
-                                <th>Logged On</th>
+                                <th>Hours</th>                                
                                 <th>Action</th>
                             </tr>
                         </thead>
@@ -167,8 +166,7 @@
                             <tr {{ 'class=break-row' if entry.is_break else '' }}>
                                 <td>{{ entry.work_date }}</td>
                                 <td>{{ entry.job }}</td>
-                                <td>{{ entry.hours }}hrs {{ "🏖️" if entry.is_break else "" }}</td>
-                                <td>{{ entry.date }}</td>
+                                <td>{{ entry.hours }}hrs {{ "🏖️" if entry.is_break else "" }}</td>                               
                                 <td>
                                     <form action="/delete/{{ loop.index0 }}" method="POST" onsubmit="return confirm('Delete this entry?')">
                                         <input type="hidden" name="offset" value="{{ offset }}">
