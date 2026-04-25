@@ -751,3 +751,136 @@ input[type="date"]:focus {
         grid-template-columns: 1fr;
     }
 }
+
+/* ── Mobile Responsive ───────────────────────────────────────── */
+@media (max-width: 768px) {
+
+    body {
+        padding: 10px;
+    }
+
+    .container {
+        padding: 0;
+    }
+
+    .header h1 {
+        font-size: 1.6rem;
+    }
+
+    /* Stack main layout vertically */
+    .main-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .right-column {
+        position: static;
+    }
+
+    /* Stack stats vertically */
+    .stats {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+    }
+
+    .stat h2 {
+        font-size: 1.4rem;
+    }
+
+    /* Fortnight nav */
+    .fortnight-nav {
+        padding: 8px;
+    }
+
+    .fortnight-period {
+        font-size: 0.8rem;
+    }
+
+    /* Cards */
+    .card {
+        padding: 16px;
+        border-radius: 12px;
+    }
+
+    /* Table scroll on mobile */
+    .card table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+
+    /* Form inputs full width */
+    .form-group input {
+        font-size: 16px;
+    }
+
+    /* Analytics summary */
+    .analytics-summary {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+
+    .summary-value {
+        font-size: 1.5rem;
+    }
+
+    /* Charts full width */
+    .charts-row {
+        grid-template-columns: 1fr;
+    }
+
+    /* Range buttons wrap */
+    .range-buttons {
+        gap: 6px;
+    }
+
+    .range-btn {
+        font-size: 0.78rem;
+        padding: 6px 10px;
+    }
+
+    /* Break toggle */
+    .break-toggle-container {
+        flex-direction: row;
+        gap: 8px;
+    }
+
+    /* History header */
+    .history-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    /* Mode buttons */
+    .mode-buttons {
+        flex-wrap: wrap;
+    }
+
+    /* Time inputs */
+    .time-inputs {
+        gap: 8px;
+    }
+
+    /* Calendar */
+    .cal-day {
+        font-size: 0.75rem;
+    }
+
+    .cal-header {
+        font-size: 0.65rem;
+    }
+}
+
+@media (max-width: 400px) {
+    .stats {
+        grid-template-columns: 1fr;
+    }
+
+    .analytics-summary {
+        grid-template-columns: 1fr;
+    }
+
+    .header h1 {
+        font-size: 1.3rem;
+    }
+}
