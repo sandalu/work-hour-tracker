@@ -2,7 +2,6 @@ import json
 import os
 from datetime import datetime, date, timedelta
 from config import FORTNIGHTLY_HOUR_LIMIT, DATA_FILE, ALERT_THRESHOLD, APP_NAME, SETTINGS_FILE
-
 def load_data():
     """Load existing work hours from file"""
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -25,17 +24,19 @@ def save_data(data):
 def log_hours(hours, job_name, work_date=None):
     """Log work hours for a specific date"""
     data = load_data()
-    
+    work_date_str = work_date if work_date else str(date.today())
+
     entry = {
         "date": str(date.today()),
-        "work_date": work_date if work_date else str(date.today()),
+        "work_date": work_date_str,
         "hours": hours,
-        "job": job_name
+        "job": job_name,
+        "is_break": is_date_in_break(work_date_str)
     }
-    
+
     data["entries"].append(entry)
     save_data(data)
-    print(f"✅ Logged {hours} hours for {job_name} on {work_date}")
+    print(f"✅ Logged {hours} hours for {job_name} on {work_date_str}")
 
 def load_settings():
     """Load app settings"""
@@ -112,7 +113,7 @@ def get_fortnight_by_offset(offset=0):
     return start, end
 
 def get_fortnightly_hours_by_offset(offset=0):
-    """Calculate total hours for a specific fortnight by offset"""
+    """Calculate total hours for a specific fortnight by offset — excludes break hours"""
     data = load_data()
     fortnight_start, fortnight_end = get_fortnight_by_offset(offset)
     total = 0
@@ -121,7 +122,8 @@ def get_fortnightly_hours_by_offset(offset=0):
         date_key = entry.get("work_date", entry["date"])
         entry_date = datetime.strptime(date_key, "%Y-%m-%d").date()
         if fortnight_start <= entry_date <= fortnight_end:
-            total += entry["hours"]
+            if not entry.get("is_break", False):
+                total += entry["hours"]
 
     return total
 
@@ -147,6 +149,52 @@ def is_before_academic_start(work_date_str):
         return False
     work_date = datetime.strptime(work_date_str, "%Y-%m-%d").date()
     return work_date < academic_start   
+
+def is_break_active():
+    """Check if semester break is currently active"""
+    settings = load_settings()
+    return settings.get("break_active", False)
+
+def start_break():
+    """Start semester break"""
+    settings = load_settings()
+    settings["break_active"] = True
+    settings["break_start"] = str(date.today())
+    save_settings(settings)
+
+def end_break():
+    """End semester break"""
+    settings = load_settings()
+    settings["break_active"] = False
+    settings["break_end"] = str(date.today())
+    save_settings(settings)
+
+def get_break_start():
+    """Get break start date"""
+    settings = load_settings()
+    return settings.get("break_start", None)
+
+def is_date_in_break(work_date_str):
+    """Check if a given date falls within any break period"""
+    settings = load_settings()
+    break_active = settings.get("break_active", False)
+    break_start = settings.get("break_start", None)
+    break_end = settings.get("break_end", None)
+
+    if not break_start:
+        return False
+
+    work_date = datetime.strptime(work_date_str, "%Y-%m-%d").date()
+    break_start_date = datetime.strptime(break_start, "%Y-%m-%d").date()
+
+    if break_active:
+        # Break still ongoing
+        return work_date >= break_start_date
+    elif break_end:
+        break_end_date = datetime.strptime(break_end, "%Y-%m-%d").date()
+        return break_start_date <= work_date <= break_end_date
+
+    return False
 
 def check_status():
     """Check your current hour status and warn if close to limit"""

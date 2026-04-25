@@ -8,7 +8,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from tracker import (log_hours, get_fortnightly_hours_by_offset, load_data,
                      get_fortnight_by_offset, get_academic_start,
-                     set_academic_start, is_before_academic_start, save_data)
+                     set_academic_start, is_before_academic_start, save_data,
+                     is_break_active, start_break, end_break, get_break_start)
 from config import FORTNIGHTLY_HOUR_LIMIT, ALERT_THRESHOLD
 
 app = Flask(__name__,
@@ -72,7 +73,12 @@ def index():
     remaining = FORTNIGHTLY_HOUR_LIMIT - total
     percentage = round((total / FORTNIGHTLY_HOUR_LIMIT) * 100, 1)
 
-    if percentage >= 100:
+    on_break = is_break_active()
+
+    if on_break:
+        status = "break"
+        message = "🏖️ Semester Break — No hour limit active!"
+    elif percentage >= 100:
         status = "danger"
         message = "🚨 Limit reached! Stop working immediately!"
     elif percentage >= ALERT_THRESHOLD * 100:
@@ -120,7 +126,9 @@ def index():
         can_go_back=can_go_back,
         academic_start=academic_start_date.strftime("%d %b %Y"),
         error=request.args.get('error'),
-        calendar_data=calendar_data
+        calendar_data=calendar_data,
+        on_break=on_break,
+        break_start=get_break_start()
     )
 
 @app.route('/log', methods=['POST'])
@@ -173,6 +181,14 @@ def settings():
         return redirect(url_for('index'))
     current = get_academic_start()
     return render_template('settings.html', current_start=current.strftime("%Y-%m-%d") if current else "")
+
+@app.route('/toggle-break', methods=['POST'])
+def toggle_break():
+    if is_break_active():
+        end_break()
+    else:
+        start_break()
+    return redirect(url_for('index'))
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
