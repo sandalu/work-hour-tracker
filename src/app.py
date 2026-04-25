@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, send_file
 import sys
 import os
 import calendar
@@ -11,6 +11,7 @@ from tracker import (log_hours, get_fortnightly_hours_by_offset, load_data,
                      set_academic_start, is_before_academic_start, save_data,
                      is_break_active, start_break, end_break, get_break_start)
 from config import FORTNIGHTLY_HOUR_LIMIT, ALERT_THRESHOLD
+from pdf_export import generate_pdf
 
 app = Flask(__name__,
             template_folder='../templates',
@@ -190,6 +191,45 @@ def toggle_break():
     else:
         start_break()
     return redirect(url_for('index'))
+
+@app.route('/export-pdf')
+def export_pdf():
+    offset = int(request.args.get('offset', 0))
+    academic_start_date = get_academic_start()
+    fortnight_start, fortnight_end = get_fortnight_by_offset(offset)
+    on_break = is_break_active()
+
+    total = round(get_fortnightly_hours_by_offset(offset), 2)
+    remaining = round(FORTNIGHTLY_HOUR_LIMIT - total, 2)
+
+    data = load_data()
+    filtered_entries = []
+    for entry in data["entries"]:
+        date_key = entry.get("work_date", entry["date"])
+        entry_date = dt.strptime(date_key, "%Y-%m-%d").date()
+        if fortnight_start <= entry_date <= fortnight_end:
+            filtered_entries.append(entry)
+
+    entries = sorted(filtered_entries, key=lambda x: x.get("work_date", x["date"]), reverse=True)
+
+    pdf_buffer = generate_pdf(
+        entries=entries,
+        total_hours=total,
+        remaining_hours=remaining,
+        fortnight_start=fortnight_start.strftime("%d %b %Y"),
+        fortnight_end=fortnight_end.strftime("%d %b %Y"),
+        academic_start=academic_start_date.strftime("%d %b %Y"),
+        on_break=on_break
+    )
+
+    filename = f"work_hours_{fortnight_start.strftime('%Y%m%d')}_{fortnight_end.strftime('%Y%m%d')}.pdf"
+
+    return send_file(
+        pdf_buffer,
+        mimetype='application/pdf',
+        as_attachment=True,
+        download_name=filename
+    )
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
