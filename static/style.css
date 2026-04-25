@@ -294,3 +294,51 @@ input[type="date"]:focus {
     font-size: 0.85rem;
     color: #475569;
 }
+
+/* Settings button */
+.settings-btn {
+    display: inline-block;
+    margin-top: 12px;
+    padding: 8px 16px;
+    background: #1e293b;
+    color: #94a3b8;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+}
+
+.settings-btn:hover {
+    background: #334155;
+    color: #f1f5f9;
+}
+
+/* Academic start info */
+.academic-start-info {
+    margin-top: 8px;
+    font-size: 0.85rem;
+    color: #64748b;
+}
+
+.academic-start-info strong {
+    color: #94a3b8;
+}
+
+/* Setup hint */
+.setup-hint {
+    color: #94a3b8;
+    font-size: 0.9rem;
+    line-height: 1.6;
+}
+
+/* Info card */
+.info-card {
+    border-left: 4px solid #6366f1;
+}
+
+/* Error card */
+.error-card {
+    border-left: 4px solid #ef4444;
+    color: #ef4444;
+}

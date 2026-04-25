@@ -13,7 +13,15 @@
         <div class="header">
             <h1>🕐 Work Hour Tracker</h1>
             <p>Australian Student Visa — 48hr Fortnightly Limit</p>
+            <a href="/settings" class="settings-btn">⚙️ Settings</a>
+            <p class="academic-start-info">🎓 Academic Start: <strong>{{ academic_start }}</strong></p>
         </div>
+
+        {% if error %}
+        <div class="card error-card">
+            <p>{{ error }}</p>
+        </div>
+        {% endif %}
 
         <!-- Status Card -->
         <div class="card status-card {{ status }}">
@@ -21,7 +29,11 @@
 
             <!-- Fortnight Navigation -->
             <div class="fortnight-nav">
+               {% if can_go_back %}
                 <a href="/?offset={{ offset - 1 }}" class="nav-arrow">&#8592;</a>
+                {% else %}
+                <span class="nav-arrow disabled">&#8592;</span>
+                {% endif %}
                 
                 <div class="fortnight-info">
                     <span class="fortnight-label">{{ "Current Fortnight" if is_current else "Previous Fortnight" }}</span>

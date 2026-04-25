@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setup — Work Hour Tracker</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🕐 Work Hour Tracker</h1>
+            <p>Let's get you set up!</p>
+        </div>
+
+        <div class="card">
+            <h2>📅 When does your university semester start?</h2>
+            <p class="setup-hint">This is your academic start date — the first day of your semester. You won't be able to log hours before this date.</p>
+            
+            <form action="/setup" method="POST">
+                <div class="form-group" style="margin-top: 24px;">
+                    <label>Academic Start Date</label>
+                    <input type="date" name="academic_start" required>
+                </div>
+                <button type="submit" class="btn">Save & Get Started →</button>
+            </form>
+        </div>
+
+        <div class="card info-card">
+            <h2>ℹ️ How fortnights work</h2>
+            <p class="setup-hint">The Australian government calculates your 48hr fortnightly limit in 14-day periods. Your fortnight starts on the Monday of your academic start week, and resets every 14 days after that.</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,21 +1,29 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, flash
 import sys
 import os
+from datetime import datetime as dt
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from tracker import log_hours, get_fortnightly_hours, load_data, get_fortnight_start, get_fortnight_end, get_fortnight_by_offset, get_fortnightly_hours_by_offset
+from tracker import (log_hours, get_fortnightly_hours_by_offset, load_data,
+                     get_fortnight_by_offset, get_academic_start,
+                     set_academic_start, is_before_academic_start, save_data)
 from config import FORTNIGHTLY_HOUR_LIMIT, ALERT_THRESHOLD
 
-app = Flask(__name__, 
+app = Flask(__name__,
             template_folder='../templates',
             static_folder='../static')
 
+app.secret_key = 'workhourtracker2026'
+
 @app.route('/')
 def index():
+    # Check if academic start is set
+    academic_start = get_academic_start()
+    if not academic_start:
+        return redirect(url_for('setup'))
+
     offset = int(request.args.get('offset', 0))
-    
-    # Clamp offset to 0 max (can't go to future)
     if offset > 0:
         offset = 0
 
@@ -23,7 +31,6 @@ def index():
     remaining = FORTNIGHTLY_HOUR_LIMIT - total
     percentage = round((total / FORTNIGHTLY_HOUR_LIMIT) * 100, 1)
 
-    # Determine status
     if percentage >= 100:
         status = "danger"
         message = "🚨 Limit reached! Stop working immediately!"
@@ -34,17 +41,18 @@ def index():
         status = "safe"
         message = f"✅ You're safe — {remaining} hours remaining"
 
-    # Get fortnight dates
     fortnight_start, fortnight_end = get_fortnight_by_offset(offset)
     is_current = offset == 0
 
-    # Get history for this fortnight only
+    # Check if can go further back
+    academic_start_date = get_academic_start()
+    prev_start, _ = get_fortnight_by_offset(offset - 1)
+    can_go_back = prev_start >= academic_start_date
+
     data = load_data()
-    all_entries = data["entries"]
     filtered_entries = []
-    for entry in all_entries:
+    for entry in data["entries"]:
         date_key = entry.get("work_date", entry["date"])
-        from datetime import datetime as dt
         entry_date = dt.strptime(date_key, "%Y-%m-%d").date()
         if fortnight_start <= entry_date <= fortnight_end:
             filtered_entries.append(entry)
@@ -62,7 +70,10 @@ def index():
         fortnight_start=fortnight_start.strftime("%d %b %Y"),
         fortnight_end=fortnight_end.strftime("%d %b %Y"),
         offset=offset,
-        is_current=is_current
+        is_current=is_current,
+        can_go_back=can_go_back,
+        academic_start=academic_start_date.strftime("%d %b %Y"),
+        error=request.args.get('error')
     )
 
 @app.route('/log', methods=['POST'])
@@ -70,20 +81,23 @@ def log():
     job = request.form.get('job')
     hours = float(request.form.get('hours'))
     work_date = request.form.get('work_date')
+
+    # Block if before academic start
+    if is_before_academic_start(work_date):
+        academic_start = get_academic_start()
+        return redirect(url_for('index', error=f"❌ Cannot log hours before your academic start date ({academic_start.strftime('%d %b %Y')})"))
+
     log_hours(hours, job, work_date)
     return redirect(url_for('index'))
 
 @app.route('/delete/<int:index>', methods=['POST'])
 def delete(index):
-    # Only allow delete on current fortnight
     fortnight_start, fortnight_end = get_fortnight_by_offset(0)
     data = load_data()
 
-    # Get current fortnight entries only
     current_entries = []
     for entry in data["entries"]:
         date_key = entry.get("work_date", entry["date"])
-        from datetime import datetime as dt
         entry_date = dt.strptime(date_key, "%Y-%m-%d").date()
         if fortnight_start <= entry_date <= fortnight_end:
             current_entries.append(entry)
@@ -93,10 +107,26 @@ def delete(index):
     if index < len(current_entries):
         entry_to_delete = current_entries[index]
         data["entries"].remove(entry_to_delete)
-        from tracker import save_data
         save_data(data)
 
     return redirect(url_for('index'))
+
+@app.route('/setup', methods=['GET', 'POST'])
+def setup():
+    if request.method == 'POST':
+        academic_start = request.form.get('academic_start')
+        set_academic_start(academic_start)
+        return redirect(url_for('index'))
+    return render_template('setup.html')
+
+@app.route('/settings', methods=['GET', 'POST'])
+def settings():
+    if request.method == 'POST':
+        academic_start = request.form.get('academic_start')
+        set_academic_start(academic_start)
+        return redirect(url_for('index'))
+    current = get_academic_start()
+    return render_template('settings.html', current_start=current.strftime("%Y-%m-%d") if current else "")
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

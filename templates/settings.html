@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings — Work Hour Tracker</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⚙️ Settings</h1>
+            <p>Manage your academic start date</p>
+        </div>
+
+        <div class="card">
+            <h2>📅 Academic Start Date</h2>
+            <p class="setup-hint">Changing this will recalculate all your fortnight periods. Your logged hours will not be deleted.</p>
+
+            <form action="/settings" method="POST">
+                <div class="form-group" style="margin-top: 24px;">
+                    <label>Academic Start Date</label>
+                    <input type="date" name="academic_start" value="{{ current_start }}" required>
+                </div>
+                <button type="submit" class="btn">Save Changes</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <h2>⚠️ Go Back</h2>
+            <p class="setup-hint">Don't want to make changes?</p>
+            <a href="/" class="btn" style="display:block; text-align:center; margin-top: 16px; text-decoration:none;">← Back to Dashboard</a>
+        </div>
+    </div>
+</body>
+</html>
