@@ -1,7 +1,7 @@
 import json
 import os
 from datetime import datetime, date, timedelta
-from config import FORTNIGHTLY_HOUR_LIMIT, DATA_FILE, ALERT_THRESHOLD, APP_NAME
+from config import FORTNIGHTLY_HOUR_LIMIT, DATA_FILE, ALERT_THRESHOLD, APP_NAME, SETTINGS_FILE
 
 def load_data():
     """Load existing work hours from file"""

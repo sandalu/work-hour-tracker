@@ -1,7 +1,8 @@
 from flask import Flask, render_template, request, redirect, url_for, flash
 import sys
 import os
-from datetime import datetime as dt
+import calendar
+from datetime import datetime as dt, date, timedelta
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
@@ -16,9 +17,34 @@ app = Flask(__name__,
 
 app.secret_key = 'workhourtracker2026'
 
+
+def build_calendar(fortnight_start, fortnight_end, worked_dates):
+    """Build calendar data for the fortnight month"""
+    today = date.today()
+    year = fortnight_start.year
+    month = fortnight_start.month
+
+    cal = calendar.monthcalendar(year, month)
+    days = []
+
+    for week in cal:
+        for day_num in week:
+            if day_num == 0:
+                days.append({"empty": True})
+            else:
+                current = date(year, month, day_num)
+                days.append({
+                    "empty": False,
+                    "day": day_num,
+                    "in_fortnight": fortnight_start <= current <= fortnight_end,
+                    "worked": str(current) in worked_dates,
+                    "is_today": current == today,
+                })
+
+    return days, fortnight_start.strftime("%B %Y")
+
 @app.route('/')
 def index():
-    # Check if academic start is set
     academic_start = get_academic_start()
     if not academic_start:
         return redirect(url_for('setup'))
@@ -44,7 +70,6 @@ def index():
     fortnight_start, fortnight_end = get_fortnight_by_offset(offset)
     is_current = offset == 0
 
-    # Check if can go further back
     academic_start_date = get_academic_start()
     prev_start, _ = get_fortnight_by_offset(offset - 1)
     can_go_back = prev_start >= academic_start_date
@@ -58,6 +83,9 @@ def index():
             filtered_entries.append(entry)
 
     entries = sorted(filtered_entries, key=lambda x: x.get("work_date", x["date"]), reverse=True)
+
+    worked_dates = set(e.get("work_date", e["date"]) for e in filtered_entries)
+    calendar_days, calendar_month = build_calendar(fortnight_start, fortnight_end, worked_dates)
 
     return render_template('index.html',
         total=total,
@@ -73,7 +101,9 @@ def index():
         is_current=is_current,
         can_go_back=can_go_back,
         academic_start=academic_start_date.strftime("%d %b %Y"),
-        error=request.args.get('error')
+        error=request.args.get('error'),
+        calendar_days=calendar_days,
+        calendar_month=calendar_month
     )
 
 @app.route('/log', methods=['POST'])

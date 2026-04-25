@@ -7,128 +7,171 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <div class="container">
-        
-        <!-- Header -->
-        <div class="header">
-            <h1>🕐 Work Hour Tracker</h1>
-            <p>Australian Student Visa — 48hr Fortnightly Limit</p>
-            <a href="/settings" class="settings-btn">⚙️ Settings</a>
-            <p class="academic-start-info">🎓 Academic Start: <strong>{{ academic_start }}</strong></p>
-        </div>
+    <!-- Main Layout -->
+        <div class="main-layout">
 
-        {% if error %}
-        <div class="card error-card">
-            <p>{{ error }}</p>
-        </div>
-        {% endif %}
+            <!-- Left Column -->
+            <div class="left-column">
 
-        <!-- Status Card -->
-        <div class="card status-card {{ status }}">
-            <p class="message">{{ message }}</p>
-
-            <!-- Fortnight Navigation -->
-            <div class="fortnight-nav">
-               {% if can_go_back %}
-                <a href="/?offset={{ offset - 1 }}" class="nav-arrow">&#8592;</a>
-                {% else %}
-                <span class="nav-arrow disabled">&#8592;</span>
+                {% if error %}
+                <div class="card error-card">
+                    <p>{{ error }}</p>
+                </div>
                 {% endif %}
-                
-                <div class="fortnight-info">
-                    <span class="fortnight-label">{{ "Current Fortnight" if is_current else "Previous Fortnight" }}</span>
-                    <span class="fortnight-period">📅 <strong>{{ fortnight_start }}</strong> → <strong>{{ fortnight_end }}</strong></span>
+
+                <!-- Status Card -->
+                <div class="card status-card {{ status }}">
+                    <p class="message">{{ message }}</p>
+
+                    <!-- Fortnight Navigation -->
+                    <div class="fortnight-nav">
+                        {% if can_go_back %}
+                        <a href="/?offset={{ offset - 1 }}" class="nav-arrow">&#8592;</a>
+                        {% else %}
+                        <span class="nav-arrow disabled">&#8592;</span>
+                        {% endif %}
+
+                        <div class="fortnight-info">
+                            <span class="fortnight-label">{{ "Current Fortnight" if is_current else "Previous Fortnight" }}</span>
+                            <span class="fortnight-period">📅 <strong>{{ fortnight_start }}</strong> → <strong>{{ fortnight_end }}</strong></span>
+                        </div>
+
+                        {% if is_current %}
+                        <span class="nav-arrow disabled">&#8594;</span>
+                        {% else %}
+                        <a href="/?offset={{ offset + 1 }}" class="nav-arrow">&#8594;</a>
+                        {% endif %}
+                    </div>
+
+                    <!-- Progress Bar -->
+                    <div class="progress-bar-container">
+                        <div class="progress-bar {{ status }}" style="width: {{ [percentage, 100] | min }}%"></div>
+                    </div>
+                    <p class="progress-text">{{ percentage }}% used</p>
+
+                    <!-- Stats -->
+                    <div class="stats">
+                        <div class="stat">
+                            <h2>{{ total }}hrs</h2>
+                            <p>Hours Used</p>
+                        </div>
+                        <div class="stat">
+                            <h2>{{ remaining }}hrs</h2>
+                            <p>Remaining</p>
+                        </div>
+                        <div class="stat">
+                            <h2>{{ limit }}hrs</h2>
+                            <p>Fortnightly Limit</p>
+                        </div>
+                    </div>
                 </div>
 
-                {% if is_current %}
-                    <span class="nav-arrow disabled">&#8594;</span>
-                {% else %}
-                    <a href="/?offset={{ offset + 1 }}" class="nav-arrow">&#8594;</a>
-                {% endif %}
+                <!-- Log Hours Form -->
+                <div class="card">
+                    <h2>➕ Log Hours</h2>
+                    <form action="/log" method="POST">
+                        <div class="form-group">
+                            <label>Job / Company Name</label>
+                            <input type="text" name="job" placeholder="e.g. BP, TeamKids" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Date Worked</label>
+                            <input type="date" name="work_date" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Hours Worked</label>
+                            <input type="number" name="hours" step="0.01" min="0.01" max="24" placeholder="e.g. 1.56" required>
+                        </div>
+                        <button type="submit" class="btn">Log Hours</button>
+                    </form>
+                </div>
+
+                <!-- History Table -->
+                <div class="card">
+                    <h2>📋 Work History</h2>
+                    {% if entries %}
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Date Worked</th>
+                                <th>Job</th>
+                                <th>Hours</th>
+                                <th>Logged On</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for entry in entries %}
+                            <tr>
+                                <td>{{ entry.work_date }}</td>
+                                <td>{{ entry.job }}</td>
+                                <td>{{ entry.hours }}hrs</td>
+                                <td>{{ entry.date }}</td>
+                                <td>
+                                    {% if is_current %}
+                                    <form action="/delete/{{ loop.index0 }}" method="POST" onsubmit="return confirm('Delete this entry?')">
+                                        <button type="submit" class="btn-delete">🗑️ Delete</button>
+                                    </form>
+                                    {% else %}
+                                    <span class="read-only">🔒 Locked</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                    <p class="no-data">No entries yet. Log your first shift above! 👆</p>
+                    {% endif %}
+                </div>
+
             </div>
-            
-            <!-- Progress Bar -->
-            <div class="progress-bar-container">
-                <div class="progress-bar {{ status }}" style="width: {{ [percentage, 100] | min }}%"></div>
-            </div>
-            <p class="progress-text">{{ percentage }}% used</p>
 
-            <!-- Stats -->
-            <div class="stats">
-                <div class="stat">
-                    <h2>{{ total }}hrs</h2>
-                    <p>Hours Used</p>
-                </div>
-                <div class="stat">
-                    <h2>{{ remaining }}hrs</h2>
-                    <p>Remaining</p>
-                </div>
-                <div class="stat">
-                    <h2>{{ limit }}hrs</h2>
-                    <p>Fortnightly Limit</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Log Hours Form -->
-        <div class="card">
-            <h2>➕ Log Hours</h2>
-            <form action="/log" method="POST">
-                <div class="form-group">
-                    <label>Job / Company Name</label>
-                    <input type="text" name="job" placeholder="e.g. BP, TeamKids" required>
-                </div>
-                <div class="form-group">
-                    <label>Date Worked</label>
-                    <input type="date" name="work_date" required>
-                </div>
-                <div class="form-group">
-                    <label>Hours Worked</label>
-                    <input type="number" name="hours" step="0.01" min="0.01" max="24" placeholder="e.g. 1.56" required>
-                </div>
-                <button type="submit" class="btn">Log Hours</button>
-            </form>
-        </div>
-
-        <!-- History Table -->
-        <div class="card">
-            <h2>📋 Work History</h2>
-            {% if entries %}
-            <table>
-                <thead>
-                    <tr>
-                        <th>Date Worked</th>
-                        <th>Job</th>
-                        <th>Hours</th>
-                        <th>Logged On</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for entry in entries %}
-                    <tr>
-                        <td>{{ entry.work_date }}</td>
-                        <td>{{ entry.job }}</td>
-                        <td>{{ entry.hours }}hrs</td>
-                        <td>{{ entry.date }}</td>
-                        <td>
-                            {% if is_current %}
-                            <form action="/delete/{{ loop.index0 }}" method="POST" onsubmit="return confirm('Delete this entry?')">
-                                <button type="submit" class="btn-delete">🗑️ Delete</button>
-                            </form>
+            <!-- Right Column — Calendar -->
+            <div class="right-column">
+                <div class="card calendar-card">
+                    <h2>📆 {{ calendar_month }}</h2>
+                    <div class="calendar-grid">
+                        <div class="cal-header">Mon</div>
+                        <div class="cal-header">Tue</div>
+                        <div class="cal-header">Wed</div>
+                        <div class="cal-header">Thu</div>
+                        <div class="cal-header">Fri</div>
+                        <div class="cal-header">Sat</div>
+                        <div class="cal-header">Sun</div>
+                        {% for day in calendar_days %}
+                            {% if day.empty %}
+                            <div class="cal-day empty"></div>
                             {% else %}
-                            <span class="read-only">🔒 Locked</span>
+                            <div class="cal-day 
+                                {{ 'in-fortnight' if day.in_fortnight else '' }} 
+                                {{ 'worked' if day.worked else '' }}
+                                {{ 'today' if day.is_today else '' }}
+                                {{ 'outside' if not day.in_fortnight else '' }}">
+                                {{ day.day }}
+                            </div>
                             {% endif %}
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-            {% else %}
-            <p class="no-data">No entries yet. Log your first shift above! 👆</p>
-            {% endif %}
-        </div>
+                        {% endfor %}
+                    </div>
 
-    </div>
+                    <!-- Legend -->
+                    <div class="cal-legend">
+                        <div class="legend-item">
+                            <div class="legend-dot in-fortnight"></div>
+                            <span>Fortnight period</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-dot worked"></div>
+                            <span>Day worked</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-dot today"></div>
+                            <span>Today</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
 </body>
 </html>
