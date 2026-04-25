@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics — Work Hour Tracker</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+</head>
+<body>
+    <div class="container">
+
+        <!-- Header -->
+        <div class="header">
+            <h1>📊 Analytics</h1>
+            <p>Work Hour Tracker — Your working history insights</p>
+            <a href="/" class="settings-btn">← Back to Dashboard</a>
+        </div>
+
+        <!-- Time Range Selector -->
+        <div class="card">
+            <h2>📅 Time Range</h2>
+            <div class="range-buttons">
+                <a href="/analytics?range=current" class="range-btn {{ 'active' if range == 'current' else '' }}">Current Fortnight</a>
+                <a href="/analytics?range=month" class="range-btn {{ 'active' if range == 'month' else '' }}">Last Month</a>
+                <a href="/analytics?range=3months" class="range-btn {{ 'active' if range == '3months' else '' }}">Last 3 Months</a>
+                <a href="/analytics?range=semester" class="range-btn {{ 'active' if range == 'semester' else '' }}">Full Semester</a>
+                <a href="/analytics?range=all" class="range-btn {{ 'active' if range == 'all' else '' }}">All Time</a>
+            </div>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="analytics-summary">
+            <div class="summary-card">
+                <p class="summary-label">Total Hours</p>
+                <h2 class="summary-value">{{ "%.2f"|format(summary.total_hours) }}</h2>
+                <p class="summary-sub">hrs worked</p>
+            </div>
+            <div class="summary-card">
+                <p class="summary-label">Semester Hours</p>
+                <h2 class="summary-value">{{ "%.2f"|format(summary.semester_hours) }}</h2>
+                <p class="summary-sub">hrs (excl. break)</p>
+            </div>
+            <div class="summary-card">
+                <p class="summary-label">Break Hours</p>
+                <h2 class="summary-value">{{ "%.2f"|format(summary.break_hours) }}</h2>
+                <p class="summary-sub">hrs during break</p>
+            </div>
+            <div class="summary-card">
+                <p class="summary-label">Total Shifts</p>
+                <h2 class="summary-value">{{ summary.total_shifts }}</h2>
+                <p class="summary-sub">shifts logged</p>
+            </div>
+            <div class="summary-card">
+                <p class="summary-label">Avg Per Fortnight</p>
+                <h2 class="summary-value">{{ "%.2f"|format(summary.avg_per_fortnight) }}</h2>
+                <p class="summary-sub">hrs average</p>
+            </div>
+            <div class="summary-card">
+                <p class="summary-label">Busiest Day</p>
+                <h2 class="summary-value" style="font-size: 1.2rem;">{{ summary.busiest_day or "N/A" }}</h2>
+                <p class="summary-sub">most hours logged</p>
+            </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="charts-row">
+
+            <!-- Hours per Fortnight -->
+            <div class="card chart-card">
+                <h2>📈 Hours per Fortnight</h2>
+                <canvas id="fortnightChart"></canvas>
+            </div>
+
+            <!-- Hours per Job -->
+            <div class="card chart-card">
+                <h2>🏢 Hours per Job</h2>
+                {% if chart_data.job_labels %}
+                <canvas id="jobChart"></canvas>
+                {% else %}
+                <p class="no-data">No data for this period.</p>
+                {% endif %}
+            </div>
+
+        </div>
+
+        <!-- Hours per Week -->
+        <div class="card">
+            <h2>📅 Hours per Week</h2>
+            {% if chart_data.week_labels %}
+            <canvas id="weekChart"></canvas>
+            {% else %}
+            <p class="no-data">No data for this period.</p>
+            {% endif %}
+        </div>
+
+        <!-- Break vs Semester -->
+        <div class="card">
+            <h2>🏖️ Break vs Semester Hours</h2>
+            <canvas id="breakChart"></canvas>
+        </div>
+
+    </div>
+
+    <script>
+        const fortnightLabels = {{ chart_data.fortnight_labels | tojson }};
+        const fortnightHours = {{ chart_data.fortnight_hours | tojson }};
+        const jobLabels = {{ chart_data.job_labels | tojson }};
+        const jobHours = {{ chart_data.job_hours | tojson }};
+        const weekLabels = {{ chart_data.week_labels | tojson }};
+        const weekHours = {{ chart_data.week_hours | tojson }};
+        const breakData = {{ chart_data.break_data | tojson }};
+
+        const gridColor = 'rgba(148, 163, 184, 0.1)';
+        const textColor = '#94a3b8';
+
+        const defaultOptions = {
+            responsive: true,
+            plugins: {
+                legend: { labels: { color: textColor } }
+            },
+            scales: {
+                x: {
+                    ticks: { color: textColor },
+                    grid: { color: gridColor }
+                },
+                y: {
+                    ticks: { color: textColor },
+                    grid: { color: gridColor },
+                    beginAtZero: true
+                }
+            }
+        };
+
+        // Hours per Fortnight Chart
+        new Chart(document.getElementById('fortnightChart'), {
+            type: 'bar',
+            data: {
+                labels: fortnightLabels,
+                datasets: [{
+                    label: 'Hours Worked',
+                    data: fortnightHours,
+                    backgroundColor: 'rgba(99, 102, 241, 0.7)',
+                    borderColor: '#6366f1',
+                    borderWidth: 1,
+                    borderRadius: 6,
+                }]
+            },
+            options: {
+                ...defaultOptions,
+                plugins: {
+                    ...defaultOptions.plugins,
+                    annotation: {
+                        annotations: {
+                            limit: {
+                                type: 'line',
+                                yMin: 48,
+                                yMax: 48,
+                                borderColor: '#ef4444',
+                                borderWidth: 2,
+                                borderDash: [6, 4],
+                                label: {
+                                    content: '48hr limit',
+                                    enabled: true,
+                                    color: '#ef4444'
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Hours per Job Chart
+        {% if chart_data.job_labels %}
+        new Chart(document.getElementById('jobChart'), {
+            type: 'doughnut',
+            data: {
+                labels: jobLabels,
+                datasets: [{
+                    data: jobHours,
+                    backgroundColor: [
+                        'rgba(99, 102, 241, 0.8)',
+                        'rgba(34, 197, 94, 0.8)',
+                        'rgba(245, 158, 11, 0.8)',
+                        'rgba(239, 68, 68, 0.8)',
+                        'rgba(20, 184, 166, 0.8)',
+                        'rgba(168, 85, 247, 0.8)',
+                    ],
+                    borderWidth: 2,
+                    borderColor: '#1e293b'
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { color: textColor, padding: 16 }
+                    }
+                }
+            }
+        });
+        {% endif %}
+
+        // Hours per Week Chart
+        {% if chart_data.week_labels %}
+        new Chart(document.getElementById('weekChart'), {
+            type: 'bar',
+            data: {
+                labels: weekLabels,
+                datasets: [{
+                    label: 'Hours Worked',
+                    data: weekHours,
+                    backgroundColor: 'rgba(34, 197, 94, 0.7)',
+                    borderColor: '#22c55e',
+                    borderWidth: 1,
+                    borderRadius: 6,
+                }]
+            },
+            options: defaultOptions
+        });
+        {% endif %}
+
+        // Break vs Semester Chart
+        new Chart(document.getElementById('breakChart'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Semester Hours', 'Break Hours'],
+                datasets: [{
+                    data: breakData,
+                    backgroundColor: [
+                        'rgba(99, 102, 241, 0.8)',
+                        'rgba(245, 158, 11, 0.8)',
+                    ],
+                    borderWidth: 2,
+                    borderColor: '#1e293b'
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { color: textColor, padding: 16 }
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

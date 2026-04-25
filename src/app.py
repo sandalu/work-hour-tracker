@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, send_file
 import sys
 import os
 import calendar
+from collections import defaultdict
 from datetime import date, timedelta, datetime as dt
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -229,6 +230,118 @@ def export_pdf():
         mimetype='application/pdf',
         as_attachment=True,
         download_name=filename
+    )
+
+@app.route('/analytics')
+def analytics():
+    academic_start = get_academic_start()
+    if not academic_start:
+        return redirect(url_for('setup'))
+
+    data = load_data()
+    all_entries = data["entries"]
+    range_param = request.args.get('range', 'semester')
+    today = date.today()
+
+    # Filter entries by range
+    if range_param == 'current':
+        start_filter, end_filter = get_fortnight_by_offset(0)
+    elif range_param == 'month':
+        start_filter = today - timedelta(days=30)
+        end_filter = today
+    elif range_param == '3months':
+        start_filter = today - timedelta(days=90)
+        end_filter = today
+    elif range_param == 'all':
+        start_filter = academic_start
+        end_filter = today
+    else:  # semester default
+        start_filter = academic_start
+        end_filter = today
+
+    filtered = []
+    for entry in all_entries:
+        date_key = entry.get("work_date", entry["date"])
+        entry_date = dt.strptime(date_key, "%Y-%m-%d").date()
+        if start_filter <= entry_date <= end_filter:
+            filtered.append(entry)
+
+    # Summary calculations
+    total_hours = round(sum(e["hours"] for e in filtered), 2)
+    semester_hours = round(sum(e["hours"] for e in filtered if not e.get("is_break", False)), 2)
+    break_hours = round(sum(e["hours"] for e in filtered if e.get("is_break", False)), 2)
+    total_shifts = len(filtered)
+
+    # Average per fortnight
+    days_range = max((end_filter - start_filter).days, 14)
+    fortnights = days_range / 14
+    avg_per_fortnight = round(semester_hours / fortnights, 2) if fortnights > 0 else 0
+
+    # Busiest day
+    day_hours = defaultdict(float)
+    for entry in filtered:
+        day_hours[entry.get("work_date", entry["date"])] += entry["hours"]
+    busiest_day = max(day_hours, key=day_hours.get) if day_hours else None
+
+    summary = {
+        "total_hours": total_hours,
+        "semester_hours": semester_hours,
+        "break_hours": break_hours,
+        "total_shifts": total_shifts,
+        "avg_per_fortnight": avg_per_fortnight,
+        "busiest_day": busiest_day
+    }
+
+    # Hours per fortnight chart
+    fortnight_data = defaultdict(float)
+    for entry in filtered:
+        if entry.get("is_break", False):
+            continue
+        date_key = entry.get("work_date", entry["date"])
+        entry_date = dt.strptime(date_key, "%Y-%m-%d").date()
+        # Find which fortnight this belongs to
+        days_from_start = (entry_date - academic_start).days
+        fortnight_num = days_from_start // 14
+        f_start = academic_start + timedelta(days=fortnight_num * 14)
+        f_end = f_start + timedelta(days=13)
+        label = f"{f_start.strftime('%d %b')} - {f_end.strftime('%d %b')}"
+        fortnight_data[label] += entry["hours"]
+
+    fortnight_labels = list(fortnight_data.keys())
+    fortnight_hours = [round(v, 2) for v in fortnight_data.values()]
+
+    # Hours per job chart
+    job_data = defaultdict(float)
+    for entry in filtered:
+        job_data[entry["job"]] += entry["hours"]
+    job_labels = list(job_data.keys())
+    job_hours = [round(v, 2) for v in job_data.values()]
+
+    # Hours per week chart
+    week_data = defaultdict(float)
+    for entry in filtered:
+        date_key = entry.get("work_date", entry["date"])
+        entry_date = dt.strptime(date_key, "%Y-%m-%d").date()
+        week_start = entry_date - timedelta(days=entry_date.weekday())
+        label = week_start.strftime("%d %b")
+        week_data[label] += entry["hours"]
+    week_labels = list(week_data.keys())
+    week_hours = [round(v, 2) for v in week_data.values()]
+
+    chart_data = {
+        "fortnight_labels": fortnight_labels,
+        "fortnight_hours": fortnight_hours,
+        "job_labels": job_labels,
+        "job_hours": job_hours,
+        "week_labels": week_labels,
+        "week_hours": week_hours,
+        "break_data": [semester_hours, break_hours]
+    }
+
+    return render_template('analytics.html',
+        range=range_param,
+        summary=summary,
+        chart_data=chart_data
     )
 
 if __name__ == '__main__':
