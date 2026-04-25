@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Work Hour Tracker</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        
+        <!-- Header -->
+        <div class="header">
+            <h1>🕐 Work Hour Tracker</h1>
+            <p>Australian Student Visa — 48hr Fortnightly Limit</p>
+        </div>
+
+        <!-- Status Card -->
+        <div class="card status-card {{ status }}">
+            <p class="message">{{ message }}</p>
+            
+            <!-- Progress Bar -->
+            <div class="progress-bar-container">
+                <div class="progress-bar {{ status }}" style="width: {{ [percentage, 100] | min }}%"></div>
+            </div>
+            <p class="progress-text">{{ percentage }}% used</p>
+
+            <!-- Stats -->
+            <div class="stats">
+                <div class="stat">
+                    <h2>{{ total }}hrs</h2>
+                    <p>Hours Used</p>
+                </div>
+                <div class="stat">
+                    <h2>{{ remaining }}hrs</h2>
+                    <p>Remaining</p>
+                </div>
+                <div class="stat">
+                    <h2>{{ limit }}hrs</h2>
+                    <p>Fortnightly Limit</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Log Hours Form -->
+        <div class="card">
+            <h2>➕ Log Hours</h2>
+            <form action="/log" method="POST">
+                <div class="form-group">
+                    <label>Job / Company Name</label>
+                    <input type="text" name="job" placeholder="e.g. BP, TeamKids" required>
+                </div>
+                <div class="form-group">
+                    <label>Hours Worked</label>
+                    <input type="number" name="hours" step="0.01" min="0.01" max="24" placeholder="e.g. 1.56" required>
+                </div>
+                <button type="submit" class="btn">Log Hours</button>
+            </form>
+        </div>
+
+        <!-- History Table -->
+        <div class="card">
+            <h2>📋 Work History</h2>
+            {% if entries %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Job</th>
+                        <th>Hours</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for entry in entries %}
+                    <tr>
+                        <td>{{ entry.date }}</td>
+                        <td>{{ entry.job }}</td>
+                        <td>{{ entry.hours }}hrs</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p class="no-data">No entries yet. Log your first shift above! 👆</p>
+            {% endif %}
+        </div>
+
+    </div>
+</body>
+</html>
