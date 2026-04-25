@@ -69,8 +69,8 @@ def index():
     if offset > 0:
         offset = 0
 
-    total = get_fortnightly_hours_by_offset(offset)
-    remaining = FORTNIGHTLY_HOUR_LIMIT - total
+    total = round(get_fortnightly_hours_by_offset(offset), 2)
+    remaining = round(FORTNIGHTLY_HOUR_LIMIT - total, 2)
     percentage = round((total / FORTNIGHTLY_HOUR_LIMIT) * 100, 1)
 
     on_break = is_break_active()
@@ -86,7 +86,7 @@ def index():
         message = f"⚠️ Warning! You've used {percentage}% of your limit!"
     else:
         status = "safe"
-        message = f"✅ You're safe — {remaining} hours remaining"
+        message = f"✅ You're safe — {remaining:.2f} hours remaining"
 
     fortnight_start, fortnight_end = get_fortnight_by_offset(offset)
     is_current = offset == 0

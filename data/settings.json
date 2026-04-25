@@ -1,3 +1,6 @@
 {
-    "academic_start": "2026-02-16"
+    "academic_start": "2026-02-16",
+    "break_active": false,
+    "break_start": "2026-04-25",
+    "break_end": "2026-04-25"
 }

@@ -7,7 +7,28 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <!-- Main Layout -->
+    <div class="container">
+
+        <!-- Header -->
+        <div class="header">
+            <h1>🕐 Work Hour Tracker</h1>
+            <p>Australian Student Visa — 48hr Fortnightly Limit</p>
+            <a href="/settings" class="settings-btn">⚙️ Settings</a>
+            <p class="academic-start-info">🎓 Academic Start: <strong>{{ academic_start }}</strong></p>
+
+            <!-- Break Toggle -->
+            <div class="break-toggle-container">
+                <span class="break-label">{{ "🏖️ Semester Break Active" if on_break else "📚 Semester Active" }}</span>
+                <form action="/toggle-break" method="POST" id="break-form">
+                    <label class="toggle-switch">
+                        <input type="checkbox" {{ "checked" if on_break else "" }} onchange="confirmToggle(this)">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </form>
+            </div>
+        </div>
+
+        <!-- Main Layout--->
         <div class="main-layout">
 
             <!-- Left Column -->
@@ -52,11 +73,11 @@
                     <!-- Stats -->
                     <div class="stats">
                         <div class="stat">
-                            <h2>{{ total }}hrs</h2>
+                            <h2>{{ "%.2f"|format(total) }}hrs</h2>
                             <p>Hours Used</p>
                         </div>
                         <div class="stat">
-                            <h2>{{ remaining }}hrs</h2>
+                            <h2>{{ "%.2f"|format(remaining) }}hrs</h2>
                             <p>Remaining</p>
                         </div>
                         <div class="stat">
@@ -66,10 +87,10 @@
                     </div>
                 </div>
 
-                <!-- Log Hours Form -->
+                <!-- Log Hours Form -->                
                 <div class="card">
                     <h2>➕ Log Hours</h2>
-                    <form action="/log" method="POST">
+                    <form action="/log" method="POST" id="log-form">
                         <div class="form-group">
                             <label>Job / Company Name</label>
                             <input type="text" name="job" placeholder="e.g. BP, TeamKids" required>
@@ -78,11 +99,50 @@
                             <label>Date Worked</label>
                             <input type="date" name="work_date" required>
                         </div>
+
+                        <!-- Hours Input Mode Toggle -->
                         <div class="form-group">
-                            <label>Hours Worked</label>
-                            <input type="number" name="hours" step="0.01" min="0.01" max="24" placeholder="e.g. 1.56" required>
+                            <div class="input-mode-toggle">
+                                <span class="mode-label">Input mode:</span>
+                                <div class="mode-buttons">
+                                    <button type="button" class="mode-btn active" id="decimal-btn" onclick="switchMode('decimal')">
+                                        🔢 Decimal
+                                    </button>
+                                    <button type="button" class="mode-btn" id="time-btn" onclick="switchMode('time')">
+                                        ⏱️ Hr / Min
+                                    </button>
+                                </div>
+                            </div>
                         </div>
-                        <button type="submit" class="btn">Log Hours</button>
+
+                        <!-- Decimal Mode -->
+                        <div class="form-group" id="decimal-mode">
+                            <label>Hours Worked</label>
+                            <input type="number" id="decimal-input" step="0.01" min="0.01" max="24" placeholder="e.g. 4.5 or 6.75">
+                        </div>
+
+                        <!-- Time Mode -->
+                        <div class="form-group" id="time-mode" style="display:none;">
+                            <label>Hours Worked</label>
+                            <div class="time-inputs">
+                                <div class="time-input-group">
+                                    <input type="number" id="hours-input" min="0" max="23" placeholder="0">
+                                    <span class="time-unit">hrs</span>
+                                </div>
+                                <div class="time-input-group">
+                                    <input type="number" id="mins-input" min="0" max="59" placeholder="0">
+                                    <span class="time-unit">min</span>
+                                </div>
+                            </div>
+                            <p class="converted-value" id="converted-display" style="display:none;">
+                                = <strong id="converted-hours">0</strong> decimal hours
+                            </p>
+                        </div>
+
+                        <!-- Hidden actual hours value submitted to server -->
+                        <input type="hidden" name="hours" id="final-hours">
+
+                        <button type="submit" class="btn" onclick="return prepareSubmit()">Log Hours</button>
                     </form>
                 </div>
 
@@ -102,19 +162,16 @@
                         </thead>
                         <tbody>
                             {% for entry in entries %}
-                            <tr>
+                            <tr {{ 'class=break-row' if entry.is_break else '' }}>
                                 <td>{{ entry.work_date }}</td>
                                 <td>{{ entry.job }}</td>
-                                <td>{{ entry.hours }}hrs</td>
+                                <td>{{ entry.hours }}hrs {{ "🏖️" if entry.is_break else "" }}</td>
                                 <td>{{ entry.date }}</td>
                                 <td>
-                                    {% if is_current %}
                                     <form action="/delete/{{ loop.index0 }}" method="POST" onsubmit="return confirm('Delete this entry?')">
+                                        <input type="hidden" name="offset" value="{{ offset }}">
                                         <button type="submit" class="btn-delete">🗑️ Delete</button>
                                     </form>
-                                    {% else %}
-                                    <span class="read-only">🔒 Locked</span>
-                                    {% endif %}
                                 </td>
                             </tr>
                             {% endfor %}
@@ -127,7 +184,7 @@
 
             </div>
 
-            <!-- Right Column — Calendar -->            
+            <!-- Right Column — Calendar -->
             <div class="right-column">
                 <div class="card calendar-card">
 
@@ -181,5 +238,83 @@
                 </div>
             </div>
         </div>
+    </div>
+
+    <script>
+    function confirmToggle(checkbox) {
+        const starting = checkbox.checked;
+        const msg = starting
+            ? "Start semester break? The 48hr limit will be paused."
+            : "End semester break? The 48hr limit will resume.";
+        if (confirm(msg)) {
+            document.getElementById('break-form').submit();
+        } else {
+            checkbox.checked = !checkbox.checked;
+        }
+    }
+    let currentMode = 'decimal';
+
+    function switchMode(mode) {
+        currentMode = mode;
+
+        if (mode === 'decimal') {
+            document.getElementById('decimal-mode').style.display = 'block';
+            document.getElementById('time-mode').style.display = 'none';
+            document.getElementById('decimal-btn').classList.add('active');
+            document.getElementById('time-btn').classList.remove('active');
+        } else {
+            document.getElementById('decimal-mode').style.display = 'none';
+            document.getElementById('time-mode').style.display = 'block';
+            document.getElementById('decimal-btn').classList.remove('active');
+            document.getElementById('time-btn').classList.add('active');
+        }
+    }
+
+    function updateConversion() {
+        const hrs = parseFloat(document.getElementById('hours-input').value) || 0;
+        const mins = parseFloat(document.getElementById('mins-input').value) || 0;
+        const total = hrs + (mins / 60);
+        const rounded = Math.round(total * 100) / 100;
+
+        const display = document.getElementById('converted-display');
+        const convertedHours = document.getElementById('converted-hours');
+
+        if (hrs > 0 || mins > 0) {
+            display.style.display = 'block';
+            convertedHours.textContent = rounded;
+        } else {
+            display.style.display = 'none';
+        }
+    }
+
+    // Live update when typing in time mode
+    document.getElementById('hours-input').addEventListener('input', updateConversion);
+    document.getElementById('mins-input').addEventListener('input', updateConversion);
+
+    function prepareSubmit() {
+        let finalHours = 0;
+
+        if (currentMode === 'decimal') {
+            finalHours = parseFloat(document.getElementById('decimal-input').value);
+            if (!finalHours || finalHours <= 0) {
+                alert('Please enter valid hours worked.');
+                return false;
+            }
+        } else {
+            const hrs = parseFloat(document.getElementById('hours-input').value) || 0;
+            const mins = parseFloat(document.getElementById('mins-input').value) || 0;
+            finalHours = Math.round((hrs + mins / 60) * 100) / 100;
+            if (finalHours <= 0) {
+                alert('Please enter valid hours and minutes.');
+                return false;
+            }
+        }
+
+        document.getElementById('final-hours').value = finalHours;
+        return true;
+    }
+
+    </script>
+
 </body>
 </html>
