@@ -22,19 +22,20 @@ def save_data(data):
     with open(file_path, "w") as f:
         json.dump(data, f, indent=4)
 
-def log_hours(hours, job_name):
-    """Log work hours for today"""
+def log_hours(hours, job_name, work_date=None):
+    """Log work hours for a specific date"""
     data = load_data()
     
     entry = {
         "date": str(date.today()),
+        "work_date": work_date if work_date else str(date.today()),
         "hours": hours,
         "job": job_name
     }
     
     data["entries"].append(entry)
     save_data(data)
-    print(f"✅ Logged {hours} hours for {job_name} on {date.today()}")
+    print(f"✅ Logged {hours} hours for {job_name} on {work_date}")
 
 def get_fortnight_start():
     """Get the most recent Monday as fortnight start"""
@@ -57,7 +58,8 @@ def get_fortnightly_hours():
     total = 0
 
     for entry in data["entries"]:
-        entry_date = datetime.strptime(entry["date"], "%Y-%m-%d").date()
+        date_key = entry.get("work_date", entry["date"])
+        entry_date = datetime.strptime(date_key, "%Y-%m-%d").date()
         if fortnight_start <= entry_date <= fortnight_end:
             total += entry["hours"]
 

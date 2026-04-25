@@ -51,7 +51,8 @@ def index():
 def log():
     job = request.form.get('job')
     hours = float(request.form.get('hours'))
-    log_hours(hours, job)
+    work_date = request.form.get('work_date')
+    log_hours(hours, job, work_date)
     return redirect(url_for('index'))
 
 @app.route('/delete/<int:index>', methods=['POST'])

@@ -212,3 +212,21 @@ tr:hover td {
 .fortnight-period strong {
     color: #e2e8f0;
 }
+
+/* Date picker */
+input[type="date"] {
+    width: 100%;
+    padding: 12px 16px;
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    color: #f1f5f9;
+    font-size: 1rem;
+    outline: none;
+    transition: border-color 0.2s;
+    cursor: pointer;
+}
+
+input[type="date"]:focus {
+    border-color: #6366f1;
+}
