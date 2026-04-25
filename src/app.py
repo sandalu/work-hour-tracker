@@ -146,24 +146,25 @@ def log():
 
 @app.route('/delete/<int:index>', methods=['POST'])
 def delete(index):
-    fortnight_start, fortnight_end = get_fortnight_by_offset(0)
+    offset = int(request.form.get('offset', 0))
+    fortnight_start, fortnight_end = get_fortnight_by_offset(offset)
     data = load_data()
 
-    current_entries = []
+    period_entries = []
     for entry in data["entries"]:
         date_key = entry.get("work_date", entry["date"])
         entry_date = dt.strptime(date_key, "%Y-%m-%d").date()
         if fortnight_start <= entry_date <= fortnight_end:
-            current_entries.append(entry)
+            period_entries.append(entry)
 
-    current_entries = sorted(current_entries, key=lambda x: x.get("work_date", x["date"]), reverse=True)
+    period_entries = sorted(period_entries, key=lambda x: x.get("work_date", x["date"]), reverse=True)
 
-    if index < len(current_entries):
-        entry_to_delete = current_entries[index]
+    if index < len(period_entries):
+        entry_to_delete = period_entries[index]
         data["entries"].remove(entry_to_delete)
         save_data(data)
 
-    return redirect(url_for('index'))
+    return redirect(url_for('index', offset=offset))
 
 @app.route('/setup', methods=['GET', 'POST'])
 def setup():
